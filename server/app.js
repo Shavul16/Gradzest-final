@@ -14,9 +14,9 @@ const path = require('path');
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production'
   : process.env.NODE_ENV === 'development' ? '.env.development'
   : '.env';
-require('dotenv').config({ path: path.join(__dirname, envFile) });
+require('dotenv').config({ path: path.join(__dirname, envFile), quiet: true });
 // Also load base .env for any missing keys
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 
 if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
   console.error('Missing required env vars: JWT_SECRET and MONGODB_URI must be set in server/.env');
@@ -133,7 +133,9 @@ app.use(helmet({
 }));
 markActive('helmet', 'helmet() with CSP default-src none, frameAncestors none');
 
-// Strip $ and . from user input to block NoSQL injection
+// Strip $ and . from user input to block NoSQL injection. restoreQuery first: Express 5's read-only req.query would
+// otherwise make this throw on every request (see middleware/restoreQuery.js).
+app.use(require('./middleware/restoreQuery'));
 app.use(mongoSanitize());
 markActive('nosql_sanitize', 'express-mongo-sanitize strips $/. from req.body/query/params');
 

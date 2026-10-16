@@ -9,7 +9,7 @@
 // Order on a live system: --apply before deploying (the old server still reads the arrays), deploy, then
 // --apply --remove-embedded, which copies what the old server wrote in between and frees the space.
 // Needs MONGODB_URI in server/.env. Back up the database first.
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
 const mongoose = require('mongoose');
 
 const BATCH = 1000;

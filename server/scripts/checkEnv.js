@@ -2,7 +2,7 @@
 // Run after pulling or setting up a machine:  node scripts/checkEnv.js
 // Secrets are not in git: get the values from whoever owns them (password manager / secure channel), put them in
 // server/.env, and use .env.example as the list of what to fill in.
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
 
 const REQUIRED = [
   ['MONGODB_URI', 'database connection string'],

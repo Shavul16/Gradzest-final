@@ -11,7 +11,7 @@
 //   node scripts/removeFakeNotifications.js --apply   # remove it
 // Needs MONGODB_URI in server/.env.
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
 // Loading db.js applies its DNS fallback, which mongodb+srv:// addresses need on some Windows setups
 const { mongoose } = require('../db');
 const Notification = require('../models/Notification');

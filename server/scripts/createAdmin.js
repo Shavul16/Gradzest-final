@@ -5,7 +5,7 @@
 //
 // Refuses if an account with that email already exists, so it can't be used to take over an existing user.
 // Needs MONGODB_URI in server/.env.
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { mongoose } = require('../db'); // applies db.js's DNS fallback for mongodb+srv:// on some Windows setups

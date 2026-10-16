@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Country = require('./models/Country');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const countries = [
   {

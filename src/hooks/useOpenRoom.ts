@@ -38,7 +38,7 @@ export function withLoadedMessages(fromList: any, open: any) {
 export function useOpenRoom(
   room: any,
   setRoom: (update: (room: any) => any) => void,
-  { refresh, containerRef, pollMs = 15000 }: { refresh?: unknown; containerRef: RefObject<HTMLElement>; pollMs?: number },
+  { refresh, containerRef, pollMs = 15000 }: { refresh?: unknown; containerRef: RefObject<HTMLElement | null>; pollMs?: number },
 ) {
   const roomId: string | undefined = room?.id ? String(room.id) : undefined;
   const [loadingOlder, setLoadingOlder] = useState(false);

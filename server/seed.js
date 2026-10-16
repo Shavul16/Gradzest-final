@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const User = require('./models/User');
 const University = require('./models/University');

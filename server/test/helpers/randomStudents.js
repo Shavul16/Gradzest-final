@@ -103,10 +103,12 @@ function randomStudents({ count, seed, tag }) {
 
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
-// A default of "now" (leadStageChangedAt, statusChangedAt, ...) is read at two slightly different moments.
+// A default of "now" (leadStageChangedAt, statusChangedAt, ...) is read at two different moments. On a busy machine, or with a
+// big LEANDOC_COUNT, those can be tens of seconds apart; every date this generator stores is in 2024, so minutes is still
+// far from anything that is not a "now" default.
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const sameMoment = (a, b) => typeof a === 'string' && typeof b === 'string' && ISO.test(a) && ISO.test(b)
-  && Math.abs(Date.parse(a) - Date.parse(b)) < 10_000;
+  && Math.abs(Date.parse(a) - Date.parse(b)) < 300_000;
 
 /** The first LEAF that differs between two JSON values (key order ignored, "now" defaults tolerated), or null. */
 function firstDifference(a, b, path = '') {

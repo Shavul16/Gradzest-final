@@ -4,9 +4,9 @@
 
 const fs = require('fs');
 
-let pdfParse;
+let PDFParse;
 try {
-  pdfParse = require('pdf-parse');
+  ({ PDFParse } = require('pdf-parse'));
 } catch {
   // Not installed in some environment — extractText() below throws a clear error instead.
 }
@@ -17,10 +17,17 @@ const CHUNK_SIZE = 1500;
 const CHUNK_OVERLAP = 200;
 
 async function extractText(filePath) {
-  if (!pdfParse) throw new Error('pdf-parse is not installed');
+  if (!PDFParse) throw new Error('pdf-parse is not installed');
   const buffer = await fs.promises.readFile(filePath);
-  const { text } = await pdfParse(buffer);
-  return text || '';
+  // pdf.js takes ownership of the bytes it is given, so hand it a copy.
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  try {
+    // pdf-parse 2 ends every page with "-- 1 of N --" unless told otherwise; that marker would end up inside chunks.
+    const { text } = await parser.getText({ pageJoiner: '\n\n' });
+    return text || '';
+  } finally {
+    await parser.destroy().catch(() => { /* nothing left to release */ });
+  }
 }
 
 // pdf-parse leaves page-break artifacts behind: lone page-number lines, repeated blank lines,
