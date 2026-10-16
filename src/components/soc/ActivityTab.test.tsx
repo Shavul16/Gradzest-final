@@ -62,6 +62,25 @@ describe('ActivityTab trail', () => {
     expect(screen.getAllByText('Already Loaded')).toHaveLength(1);
   });
 
+  it('shows a pushed row once even when it arrives the instant the page of rows appears', async () => {
+    // The test above waits for the rows and is therefore timing-dependent: React may or may not have run its effects by
+    // then. Here the push happens inside the DOM mutation that shows the rows, which is before any effect can have run.
+    render(<ActivityTab onInvestigateUser={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Activity trail' }));
+    let pushed = false;
+    const observer = new MutationObserver(() => {
+      if (pushed || !document.body.textContent?.includes('Already Loaded')) return;
+      pushed = true;
+      act(() => { live.socket.emit('ui_activity', [row({ name: 'Already Loaded' })]); });
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    await screen.findByText('Already Loaded');
+    await act(async () => { await new Promise(r => setTimeout(r, 50)); }); // let any effects and updates settle
+    observer.disconnect();
+    expect(pushed).toBe(true);
+    expect(screen.getAllByText('Already Loaded')).toHaveLength(1);
+  });
+
   it('keeps showing live rows after one with no email arrives', async () => {
     await openTrail();
     act(() => { live.socket.emit('ui_activity', [row({ _id: 'v1', email: undefined, name: undefined, userId: '', role: 'visitor' })]); });

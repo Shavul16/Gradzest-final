@@ -92,6 +92,25 @@ describe('OverviewTab', () => {
     expect(screen.getByText(/A different one/)).toBeInTheDocument();
   });
 
+  it('shows a pushed event once even when it arrives the instant the page of events appears', async () => {
+    // The test above waits for the rows, so it depends on whether React has run its effects by then. Here the push happens
+    // inside the DOM mutation that shows the rows, which is before any effect can have run.
+    soc.events.mockResolvedValue({ events: [event({ message: 'Only once please' })], total: 1 });
+    render(<OverviewTab />);
+    let pushed = false;
+    const observer = new MutationObserver(() => {
+      if (pushed || !document.body.textContent?.includes('Only once please')) return;
+      pushed = true;
+      act(() => { live.socket.emit('security_event', event({ message: 'Only once please' })); });
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    expect(await screen.findByText(/Only once please/)).toBeInTheDocument();
+    await act(async () => { await new Promise(r => setTimeout(r, 50)); }); // let any effects and updates settle
+    observer.disconnect();
+    expect(pushed).toBe(true);
+    expect(screen.getAllByText(/Only once please/)).toHaveLength(1);
+  });
+
   it('says when filters, not an empty system, are why there is nothing to show', async () => {
     render(<OverviewTab />);
     expect(await screen.findByText('No security events yet')).toBeInTheDocument();

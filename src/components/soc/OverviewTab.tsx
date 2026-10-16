@@ -98,8 +98,13 @@ export default function OverviewTab() {
   useEffect(() => { pauseRef.current = isPaused; }, [isPaused]);
   const periodRef = useRef(period);
   useEffect(() => { periodRef.current = period; }, [period]);
+  // Every change to the events goes through updateEvents, which sets the ref in the same call. Copying it from an effect left a
+  // gap after the events were on screen in which a pushed event that was already in the page looked new and was added twice.
   const eventsRef = useRef<SecurityEvent[]>([]);
-  useEffect(() => { eventsRef.current = events; }, [events]);
+  const updateEvents = useCallback((next: (prev: SecurityEvent[]) => SecurityEvent[]) => {
+    eventsRef.current = next(eventsRef.current);
+    setEvents(eventsRef.current);
+  }, []);
   // Bumped whenever the feed's filters change, so a response (or a "Load more") for a filter that is no longer set is dropped.
   const feedEpoch = useRef(0);
   const lastStatsRefresh = useRef(0);
@@ -135,13 +140,13 @@ export default function OverviewTab() {
     try {
       const data = await fetchEvents(0);
       if (epoch !== feedEpoch.current) return;
-      setEvents(data.events || []); setEventsTotal(data.total ?? (data.events || []).length);
+      updateEvents(() => data.events || []); setEventsTotal(data.total ?? (data.events || []).length);
     } catch (e) {
       if (epoch !== feedEpoch.current) return;
       setFeedError(errorText(e));
     }
     setFeedLoading(false);
-  }, [fetchEvents]);
+  }, [fetchEvents, updateEvents]);
 
   useEffect(() => {
     feedEpoch.current++; // anything still in flight for the previous filters is now stale
@@ -160,8 +165,10 @@ export default function OverviewTab() {
     try {
       const data = await fetchEvents(events.length);
       if (epoch !== feedEpoch.current) return;
-      const have = new Set(eventsRef.current.map(x => x._id));
-      setEvents(prev => [...prev, ...(data.events || []).filter((x: SecurityEvent) => !have.has(x._id))]);
+      updateEvents(prev => {
+        const have = new Set(prev.map(x => x._id));
+        return [...prev, ...(data.events || []).filter((x: SecurityEvent) => !have.has(x._id))];
+      });
       setEventsTotal(data.total ?? events.length);
     } catch (e) {
       if (epoch === feedEpoch.current) setActionError({ message: errorText(e), retry: loadMoreEvents });
@@ -198,13 +205,13 @@ export default function OverviewTab() {
         pendingRef.current = [event, ...pendingRef.current];
         setPendingCount(pendingRef.current.length);
       } else {
-        setEvents(prev => [event, ...prev].slice(0, 200));
+        updateEvents(prev => [event, ...prev].slice(0, 200));
       }
       setEventsTotal(t => t + 1);
     };
     socket.on('security_event', onSecurityEvent);
     return () => { socket.off('security_event', onSecurityEvent); };
-  }, [socket, loadStats]);
+  }, [socket, loadStats, updateEvents]);
 
   const togglePause = () => {
     setIsPaused(was => {
@@ -212,7 +219,7 @@ export default function OverviewTab() {
         const pending = pendingRef.current;
         pendingRef.current = [];
         setPendingCount(0);
-        setEvents(prev => [...pending, ...prev].slice(0, 200));
+        updateEvents(prev => [...pending, ...prev].slice(0, 200));
       }
       return !was;
     });
@@ -224,7 +231,7 @@ export default function OverviewTab() {
     api.soc.download(`/events/export.csv?${params}`, 'soc-events.csv')
       .catch(e => setActionError({ message: errorText(e), retry: exportFeedCsv }));
   };
-  const clearFeed = () => { setEvents([]); pendingRef.current = []; setPendingCount(0); };
+  const clearFeed = () => { updateEvents(() => []); pendingRef.current = []; setPendingCount(0); };
 
   const PERIODS: { key: Period; label: string }[] = [{ key: '24h', label: '24 Hours' }, { key: '7d', label: '7 Days' }, { key: '30d', label: '30 Days' }];
   const severityData = stats ? Object.entries(stats.severityBreakdown || {}).map(([severity, count]) => ({ severity, count })) : [];
