@@ -1,0 +1,3 @@
+# The fake Gemini key in the first commit's test fixture (changed to a non-key-shaped value in the next commit).
+# Fingerprint = commit:file:rule:line. Anything else gitleaks finds is still reported.
+929df20c0378976b425e1bbd595b00889dc7d1b1:server/test/integrationsCheck.test.js:generic-api-key:6
