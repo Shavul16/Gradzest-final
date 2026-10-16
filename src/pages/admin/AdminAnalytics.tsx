@@ -211,7 +211,7 @@ export default function AdminAnalytics() {
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
                         <Pie data={data.applicationsByStatus} dataKey="count" nameKey="status"
-                          cx="50%" cy="50%" outerRadius={80} label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`}
+                          cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                           labelLine={false}>
                           {data.applicationsByStatus.map((_: any, i: number) => (
                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
