@@ -34,9 +34,10 @@ describe('matches (live rows against the active filters)', () => {
     expect(matches(visitor, NO_FILTERS)).toBe(true);
   });
 
-  it('matches an email prefix, an action and a page fragment', () => {
+  it('matches the exact email (as the server does: addresses are stored encrypted), an action and a page fragment', () => {
     const r = row() as any;
-    expect(matches(r, { ...NO_FILTERS, email: 'STAFF' })).toBe(true);
+    expect(matches(r, { ...NO_FILTERS, email: ' STAFF@example.com ' })).toBe(true);
+    expect(matches(r, { ...NO_FILTERS, email: 'STAFF' })).toBe(false); // not a prefix search: the server could not run one either
     expect(matches(r, { ...NO_FILTERS, kind: 'click' })).toBe(false);
     expect(matches(r, { ...NO_FILTERS, page: 'students' })).toBe(true);
   });

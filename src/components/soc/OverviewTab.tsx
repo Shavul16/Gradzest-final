@@ -299,7 +299,7 @@ export default function OverviewTab() {
                   <div aria-hidden="true">
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
-                        <Pie data={severityData} dataKey="count" nameKey="severity" cx="50%" cy="50%" outerRadius={80}
+                        <Pie data={severityData} dataKey="count" nameKey="severity" cx="50%" cy="50%" outerRadius={80} rootTabIndex={-1}
                           label={({ severity, percent }: any) => `${severity} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
                           {severityData.map((d: any, i: number) => <Cell key={i} fill={SEVERITY_COLORS[d.severity] || '#6b7280'} />)}
                         </Pie>

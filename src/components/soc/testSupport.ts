@@ -1,4 +1,13 @@
 // Shared by the SOC component tests. Not imported by the app.
+import { vi } from 'vitest';
+import { configure } from '@testing-library/react';
+
+// These tabs debounce their searches (250-300 ms) and the first render in a file also pays for loading the module graph,
+// so the stock 1 s wait for an element and 5 s per test sit right at what a quiet machine needs; a busy one (the whole
+// suite running in parallel, a browser open) fails them for being slow, not for being wrong. These limits are about
+// telling a hung test from a slow machine.
+configure({ asyncUtilTimeout: 5000 });
+vi.setConfig({ testTimeout: 20000 });
 
 /** A stand-in for the dashboard's socket: components subscribe with on/off, and a test pushes an event with emit. */
 export function fakeSocket() {

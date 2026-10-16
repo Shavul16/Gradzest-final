@@ -44,7 +44,7 @@ function describe(r: UiRow): string {
 // `email` is empty for a signed-out visitor (the row below falls back to "Signed-out visitor"), so it cannot be assumed to
 // be a string here: a throw inside the socket handler would silently stop every later live row from appearing.
 export const matches = (r: UiRow, f: Filters) =>
-  (!f.email || (r.email || '').toLowerCase().startsWith(f.email.toLowerCase()))
+  (!f.email.trim() || (r.email || '').toLowerCase() === f.email.trim().toLowerCase())
   && (f.kind === 'all' || r.kind === f.kind)
   && (!f.page || (r.page || '').toLowerCase().includes(f.page.toLowerCase()))
   && (!f.q || [r.element?.label, r.element?.id, r.element?.href, r.file, r.page, r.context].some(v => (v || '').toLowerCase().includes(f.q.toLowerCase())));
@@ -150,7 +150,7 @@ function TrailView({ onInvestigateUser }: { onInvestigateUser: (id: string) => v
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
-          <input value={filters.email} onChange={e => setFilters(f => ({ ...f, email: e.target.value }))} placeholder="User email starts with…" aria-label="User email starts with" className={`${input} pl-8 w-52`} />
+          <input value={filters.email} onChange={e => setFilters(f => ({ ...f, email: e.target.value }))} placeholder="Exact user email…" aria-label="User email (exact)" className={`${input} pl-8 w-52`} />
         </div>
         <select value={filters.kind} onChange={e => setFilters(f => ({ ...f, kind: e.target.value }))} className={input} aria-label="Action type">
           <option value="all">All actions</option>

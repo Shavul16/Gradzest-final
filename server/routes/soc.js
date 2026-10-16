@@ -1328,31 +1328,44 @@ const KNOWN_GAPS = [
   },
 ];
 
+// What the dashboard shows for one `npm audit --json` result: the vulnerability counts, or { error: <sentence> }. It never
+// returns an empty object, because the dashboard reads "no counts" as "no vulnerabilities" and draws a green all-clear.
+// When the audit cannot run (no network, registry timeout) npm prints an error object, not counts; passing that straight
+// through left the card blank, and a result without a metadata block looked like a clean bill of health.
+function summariseAudit(audit) {
+  const counts = audit?.metadata?.vulnerabilities;
+  if (counts && typeof counts === 'object') return counts;
+  const e = audit?.error;
+  const reason = typeof e === 'string' ? e : (e?.summary || e?.code || e?.message || '');
+  return { error: String(reason || 'npm audit returned no vulnerability data').slice(0, 300) };
+}
+
+// One audit at a time: a second "Re-check" while one is running shares it instead of starting two npm processes.
+let postureInflight = null;
+async function buildPosture(forceRefresh) {
+  const [rootAudit, serverAudit] = await Promise.all([
+    runNpmAudit(path.join(__dirname, '..', '..')),
+    runNpmAudit(path.join(__dirname, '..')),
+  ]);
+  postureCache = {
+    checkedAt: new Date().toISOString(),
+    dependencyAudit: { frontend: summariseAudit(rootAudit), backend: summariseAudit(serverAudit) },
+    knownGaps: KNOWN_GAPS,
+    activeFeatures: getActiveFeatures(),
+    codeAnalysis: getCodeAnalysis(forceRefresh),
+  };
+  postureCacheAt = Date.now();
+  return postureCache;
+}
+
 router.get('/posture', authMiddleware, adminOnly, async (req, res) => {
   try {
     const forceRefresh = req.query.refresh === '1';
     if (!forceRefresh && postureCache && Date.now() - postureCacheAt < POSTURE_CACHE_MS) {
       return res.json({ ...postureCache, cached: true });
     }
-
-    const [rootAudit, serverAudit] = await Promise.all([
-      runNpmAudit(path.join(__dirname, '..', '..')),
-      runNpmAudit(path.join(__dirname, '..')),
-    ]);
-
-    postureCache = {
-      checkedAt: new Date().toISOString(),
-      dependencyAudit: {
-        frontend: rootAudit.metadata?.vulnerabilities || rootAudit.error || {},
-        backend: serverAudit.metadata?.vulnerabilities || serverAudit.error || {},
-      },
-      knownGaps: KNOWN_GAPS,
-      activeFeatures: getActiveFeatures(),
-      codeAnalysis: getCodeAnalysis(forceRefresh),
-    };
-    postureCacheAt = Date.now();
-
-    res.json({ ...postureCache, cached: false });
+    if (!postureInflight) postureInflight = buildPosture(forceRefresh).finally(() => { postureInflight = null; });
+    res.json({ ...(await postureInflight), cached: false });
   } catch (err) {
     sendServerError(res, err, 'Server error');
   }
@@ -1360,3 +1373,4 @@ router.get('/posture', authMiddleware, adminOnly, async (req, res) => {
 
 module.exports = router;
 module.exports.adminOnly = adminOnly; // reused by routes/socExtras.js so every SOC route shares one gate
+module.exports.summariseAudit = summariseAudit; // exported for its test

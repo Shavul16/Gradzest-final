@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import './testSupport';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 vi.mock('./AlertChannelsCard', () => ({ default: () => null }));
