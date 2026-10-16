@@ -133,7 +133,9 @@ app.use(helmet({
 }));
 markActive('helmet', 'helmet() with CSP default-src none, frameAncestors none');
 
-// Strip $ and . from user input to block NoSQL injection
+// Strip $ and . from user input to block NoSQL injection. restoreQuery first: Express 5's read-only req.query would
+// otherwise make this throw on every request (see middleware/restoreQuery.js).
+app.use(require('./middleware/restoreQuery'));
 app.use(mongoSanitize());
 markActive('nosql_sanitize', 'express-mongo-sanitize strips $/. from req.body/query/params');
 
