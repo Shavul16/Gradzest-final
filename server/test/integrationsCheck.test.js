@@ -3,7 +3,7 @@ const { runChecks, hasFailures, redact, clamdPing } = require('../lib/integratio
 
 const SECRETS = {
   ANTHROPIC_API_KEY: 'sk-ant-test-0123456789abcdef',
-  GEMINI_API_KEY: 'AIzaSyTEST0123456789abcdef',
+  GEMINI_API_KEY: 'gemini-fake-key-000000', // deliberately not key-shaped, so secret scanners ignore the fixture
   SMTP_PASS: 'smtp-pass-0123456789',
   WHATSAPP_TOKEN: 'EAAGwhatsapp0123456789',
   SMARTFLO_API_TOKEN: 'smartflo-token-0123456789',
