@@ -65,8 +65,13 @@ function TrailView({ onInvestigateUser }: { onInvestigateUser: (id: string) => v
   const [actionError, setActionError] = useState<{ message: string; retry: () => void } | null>(null);
   const filtersRef = useRef(filters);
   useEffect(() => { filtersRef.current = filters; }, [filters]);
+  // Every change to the rows goes through updateRows, which sets the ref in the same call. Copying it from an effect left a
+  // gap after the rows were on screen in which a pushed row that was already in the page looked new and was added twice.
   const rowsRef = useRef<UiRow[]>([]);
-  useEffect(() => { rowsRef.current = rows; }, [rows]);
+  const updateRows = useCallback((next: (prev: UiRow[]) => UiRow[]) => {
+    rowsRef.current = next(rowsRef.current);
+    setRows(rowsRef.current);
+  }, []);
   // Bumped by every fresh load, so a slower response for filters that are no longer set is dropped.
   const loadEpoch = useRef(0);
 
@@ -82,13 +87,13 @@ function TrailView({ onInvestigateUser }: { onInvestigateUser: (id: string) => v
     try {
       const d = await api.soc.uiActivity(params(filters, 0));
       if (epoch !== loadEpoch.current) return;
-      setRows(d.activity || []); setTotal(d.total || 0); setTruncated(!!d.truncated); setTracked(d.trackedRoles || []);
+      updateRows(() => d.activity || []); setTotal(d.total || 0); setTruncated(!!d.truncated); setTracked(d.trackedRoles || []);
     } catch (e) {
       if (epoch !== loadEpoch.current) return;
       setError(errorText(e));
     }
     setLoading(false);
-  }, [filters]);
+  }, [filters, updateRows]);
 
   // Debounced so typing in a filter box doesn't fire a request per keystroke.
   useEffect(() => {
@@ -105,8 +110,11 @@ function TrailView({ onInvestigateUser }: { onInvestigateUser: (id: string) => v
     try {
       const d = await api.soc.uiActivity(params(filters, rows.length));
       if (epoch !== loadEpoch.current) return; // the filters changed while this page was coming
-      const have = new Set(rowsRef.current.map(r => r._id));
-      setRows(prev => [...prev, ...(d.activity || []).filter((r: UiRow) => !have.has(r._id))]); setTotal(d.total || 0);
+      updateRows(prev => {
+        const have = new Set(prev.map(r => r._id));
+        return [...prev, ...(d.activity || []).filter((r: UiRow) => !have.has(r._id))];
+      });
+      setTotal(d.total || 0);
     } catch (e) {
       // The rows already loaded stay; only the extra page failed.
       if (epoch === loadEpoch.current) setActionError({ message: errorText(e), retry: loadMore });
@@ -121,11 +129,11 @@ function TrailView({ onInvestigateUser }: { onInvestigateUser: (id: string) => v
       // A row can already be on screen (it was in the page that loaded just before this push arrived).
       const have = new Set(rowsRef.current.map(r => r._id));
       const fresh = batch.filter(r => !have.has(r._id) && matches(r, filtersRef.current)).reverse();
-      if (fresh.length) { setRows(prev => [...fresh, ...prev].slice(0, 1000)); setTotal(t => t + fresh.length); }
+      if (fresh.length) { updateRows(prev => [...fresh, ...prev].slice(0, 1000)); setTotal(t => t + fresh.length); }
     };
     socket.on('ui_activity', onActivity);
     return () => { socket.off('ui_activity', onActivity); };
-  }, [socket]);
+  }, [socket, updateRows]);
 
   const exportCsv = () => {
     const p = new URLSearchParams(Object.entries(params(filters, 0)).filter(([k, v]) => v && k !== 'limit' && k !== 'skip') as [string, string][]);
