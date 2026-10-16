@@ -4,7 +4,7 @@
 // Uses the database in server/.env (read-only for this script). Prints names and emails on your own screen only.
 // Run it before the first deploy, and any time you want to know what students are about to receive.
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
 const mongoose = require('mongoose');
 
 (async () => {

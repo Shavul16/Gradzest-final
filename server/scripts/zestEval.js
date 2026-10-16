@@ -12,7 +12,7 @@
 //
 // Exit code is 1 when any case fails, so it can gate a deploy or run in CI once a key is available there.
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
 process.env.NODE_ENV = 'test';
 process.env.DATA_ENCRYPTION_KEY = process.env.DATA_ENCRYPTION_KEY || 'a'.repeat(64);
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'eval-only-secret';

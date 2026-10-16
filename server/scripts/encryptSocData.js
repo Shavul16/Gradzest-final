@@ -6,7 +6,7 @@
 //   node scripts/encryptSocData.js --apply  # encrypt in place
 //
 // Needs MONGODB_URI and DATA_ENCRYPTION_KEY in server/.env. Back up the database first.
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { encrypt, decryptStrict, deriveEncKey, isEncrypted } = require('../lib/fieldCrypto');

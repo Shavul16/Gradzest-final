@@ -14,9 +14,9 @@ const path = require('path');
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production'
   : process.env.NODE_ENV === 'development' ? '.env.development'
   : '.env';
-require('dotenv').config({ path: path.join(__dirname, envFile) });
+require('dotenv').config({ path: path.join(__dirname, envFile), quiet: true });
 // Also load base .env for any missing keys
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 
 if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
   console.error('Missing required env vars: JWT_SECRET and MONGODB_URI must be set in server/.env');
